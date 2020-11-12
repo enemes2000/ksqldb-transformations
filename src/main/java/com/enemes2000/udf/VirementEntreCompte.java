@@ -1,6 +1,5 @@
 package com.enemes2000.udf;
 
-
 import io.confluent.ksql.function.udf.UdfParameter;
 import io.confluent.ksql.function.udtf.Udtf;
 import io.confluent.ksql.function.udtf.UdtfDescription;
@@ -8,11 +7,16 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 
+
+import java.util.ArrayList;
+import java.util.List;
+
 @UdtfDescription(name = "VirementEntreCompte", description = "virement entre compte  - Rule 7")
 public class VirementEntreCompte {
 
 
- final String OUTPUT_STRUCT_DESCRIPTOR = "STRUCT<" + "NUM-INSN-CNTP STRING," + "NUM-CAIS-CNTP STRING," + "NUM-FOLI-CNTP STRING," + "NUM-SERV-CNTP STRING" + "NUM-CMPT-CNTP" + ">";
+ final static String OUTPUT_STRUCT_DESCRIPTOR = "STRUCT<" + "NUM-INSN-CNTP  VARCHAR," + "NUM-CAIS-CNTP  VARCHAR," + "NUM-FOLI-CNTP VARCHAR," + "NUM-SERV-CNTP VARCHAR" + "NUM-CMPT-CNTP VARCHAR" + ">";
+ final  static  String INPUT_STRUCT_DESCRIPTOR =  "STRUCT<" + "DSC_ORIG_TRX_HF13" + ">";
 
  private static final int NUM_INSN_CNTP_IND = 4;
  private static final int NUM_CAIS_CNTP_IND = 8;
@@ -29,26 +33,30 @@ public class VirementEntreCompte {
          .field("NUM-CMPT-CNTP", Schema.OPTIONAL_STRING_SCHEMA)
          .build();
 
+ @Udtf(schema = OUTPUT_STRUCT_DESCRIPTOR)
+ public List<Struct> extractVirementCompte(@UdfParameter(value="originTrx", schema = "STRUCT <DSC_ORIG_TRX_HF13 VARCHAR>") final Struct  originTrx) {
 
- @Udtf(description = "Extract field for virement entre compte", schema = OUTPUT_STRUCT_DESCRIPTOR)
- public Struct extractVirementCompte(@UdfParameter("DSC_ORIG_TRX_HF13") final String DSC_ORIG_TRX_HF13) {
+  List<Struct> ouputs = new ArrayList<>();
+
+  String DSC_ORIG_TRX_HF13 =  originTrx.get("DSC_ORIG_TRX_HF13").toString();
 
   if ("1".equals(DSC_ORIG_TRX_HF13.substring(1,2))||
           "2".equals(DSC_ORIG_TRX_HF13.substring(1,2)) ||
           "3".equals(DSC_ORIG_TRX_HF13.substring(1,2)) ||
           "4".equals(DSC_ORIG_TRX_HF13.substring(1,2))) {
-
-          return new Struct(OUTPUT_SCHEMA)
+   ouputs.add(
+           new Struct(OUTPUT_SCHEMA)
                    .put("NUM-INSN-CNTP", getNUM_INSN_CNTP_FROM(DSC_ORIG_TRX_HF13))
                    .put("NUM-CAIS-CNTP", getNUM_CAIS_CNTP_FROM(DSC_ORIG_TRX_HF13))
                    .put("NUM-FOLI-CNTP", getNUM_FOLI_CNTP_FROM(DSC_ORIG_TRX_HF13))
                    .put("NUM-SERV-CNTP", getNUM_SERV_CNTP_FROM(DSC_ORIG_TRX_HF13))
-                   .put("NUM-CMPT-CNTP", getNUM_CMPT_CNTP_FROM(DSC_ORIG_TRX_HF13));
-
+                   .put("NUM-CMPT-CNTP", getNUM_CMPT_CNTP_FROM(DSC_ORIG_TRX_HF13))
+   );
   }
 
-  
- return  null;
+
+
+  return ouputs;
 
  }
 
